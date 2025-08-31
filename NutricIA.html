@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nutrición · Menú Semanal Saludable – Asistente NutrIA</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="description" content="Plan nutricional de 7 días (4 comidas/día) con recetas, calorías, macros y cesta semanal de compra en Mercadona (Alicante)." />
+  <style>
+    :root{ --brand:#0ea5e9; --brand-600:#0284c7; }
+    .glass{backdrop-filter: blur(8px); background: rgba(255,255,255,.65);} 
+    .tag{font-size:.7rem} 
+    details>summary::-webkit-details-marker{display:none}
+    .sticky-col{position:sticky; right:0; background:linear-gradient(90deg,rgba(255,255,255,0),white 12%)}
+    .scrollbar::-webkit-scrollbar{height:10px}
+    .scrollbar::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:9999px}
+    .shadow-soft{box-shadow:0 4px 16px rgba(2,132,199,.15)}
+    .card{border-radius:1.25rem}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;border-radius:9999px;padding:.6rem 1rem;font-weight:600}
+    .btn-primary{background:var(--brand);color:white}
+    .btn-primary:hover{background:var(--brand-600)}
+    .btn-ghost{background:transparent;border:1px solid #e5e7eb}
+    .kcal-badge{font-variant-numeric:tabular-nums}
+    .checkbox{width:1.15rem;height:1.15rem}
+    .fade{animation:fade .3s ease}
+    @keyframes fade{from{opacity:0}to{opacity:1}}
+    .grid-day{grid-template-columns: repeat(4,minmax(0,1fr))}
+    @media (max-width:1024px){.grid-day{grid-template-columns: 1fr}}
+    .img-cover{object-fit:cover}
+
+    /* === Tarjetas grandes de calendario (sin fotos) === */
+    .meal-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:16px}
+    .meal-hero{height:120px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:22px;color:white;letter-spacing:.2px}
+    .meal-type{font-weight:700;color:#374151}
+    .meta{font-size:.9rem;color:#4b5563}
+    .btn-primary-sm{background:#3b82f6;color:white;padding:.55rem .9rem;border-radius:10px;font-weight:700}
+    .btn-primary-sm:hover{background:#2563eb}
+    .bg-desayuno{background:linear-gradient(135deg,#22c55e,#16a34a)}
+    .bg-comida{background:linear-gradient(135deg,#f59e0b,#f97316)}
+    .bg-merienda{background:linear-gradient(135deg,#ec4899,#db2777)}
+    .bg-cena{background:linear-gradient(135deg,#84cc16,#65a30d)}
+
+    /* Modal receta sin imagen (banner fijo) */
+    .modal-hero{height:180px;display:grid;place-items:center;border-top-left-radius:1.5rem;border-top-right-radius:1.5rem;color:white;background:linear-gradient(135deg,#f59e0b,#fbbf24)}
+  </style>
+</head>
+<body class="bg-gradient-to-b from-sky-50 via-white to-white text-slate-800">
+  <!-- ===== Header ===== -->
+  <header class="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap gap-3 items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-2xl bg-sky-500/10 grid place-content-center"><span class="text-sky-600 text-xl">🍽️</span></div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-extrabold leading-tight">Plan Nutricional · 7 días</h1>
+          <p class="text-sm text-slate-500 -mt-1">Déficit moderado (~1530 kcal/día) · Alto en proteína · Variedad real</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="rotateBtn" class="btn btn-ghost">🔄 Generar nueva semana</button>
+        <a href="#cesta" class="btn btn-primary">🛒 Ver cesta semanal en Mercadona</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pt-6 pb-24">
+    <!-- ===== Por qué funciona ===== -->
+    <section class="mb-6">
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="card p-5 bg-white shadow-soft">
+          <h2 class="font-bold mb-2">⚡ Energía estable</h2>
+          <p class="text-sm text-slate-600">4 comidas espaciadas con carbohidratos integrales y <b>proteína magra</b> para rendir en el gym (3×/sem) sin picos ni bajones.</p>
+        </div>
+        <div class="card p-5 bg-white shadow-soft">
+          <h2 class="font-bold mb-2">🔥 Quema de grasa</h2>
+          <p class="text-sm text-slate-600">Déficit <b>moderado</b> (~1530 kcal/día vs 2500 objetivo) y ~ <span class="font-semibold">120 g proteína</span>/día para preservar masa muscular.</p>
+        </div>
+        <div class="card p-5 bg-white shadow-soft">
+          <h2 class="font-bold mb-2">🍓 Variedad y salud</h2>
+          <p class="text-sm text-slate-600">Verduras, legumbres, pescado azul, AOVE y lácteos: <b>micro</b>nutrientes, fibra y grasas cardioprotectoras.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Controles resumen ===== -->
+    <section class="mb-6 card bg-white shadow-soft p-5">
+      <div class="flex flex-wrap items-center gap-4 justify-between">
+        <div class="flex items-center gap-2">
+          <label for="daySelect" class="text-sm text-slate-600">Ir al día</label>
+          <select id="daySelect" class="rounded-xl border p-2">
+            <option value="0">Lunes (Día 1)</option>
+            <option value="1">Martes (Día 2)</option>
+            <option value="2">Miércoles (Día 3)</option>
+            <option value="3">Jueves (Día 4)</option>
+            <option value="4">Viernes (Día 5)</option>
+            <option value="5">Sábado (Día 6)</option>
+            <option value="6">Domingo (Día 7)</option>
+          </select>
+        </div>
+        <div class="flex flex-wrap gap-3 items-center">
+          <div class="px-3 py-2 rounded-xl bg-sky-50 text-sky-700 kcal-badge">
+            Plan del día: <b id="plannedKcal">0</b> kcal · P <b id="plannedP">0</b> · C <b id="plannedC">0</b> · G <b id="plannedF">0</b>
+          </div>
+          <div class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 kcal-badge">
+            Hechas (✅): <b id="doneKcal">0</b> kcal
+          </div>
+          <div class="px-3 py-2 rounded-xl bg-amber-50 text-amber-700 kcal-badge">
+            Dif. vs 2500: <b id="diffVsGoal">0</b> kcal
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Calendario semanal (sustituido) ===== -->
+    <section id="calendario" class="mb-10">
+      <div id="weekGrid" class="space-y-6"></div>
+    </section>
+
+    <!-- ===== Snacks extra ===== -->
+    <section class="mb-10 card bg-white shadow-soft p-5">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold">🥜 Snacks saludables extra (por si hay más hambre)</h2>
+        <button id="toggleSnacks" class="btn btn-ghost">Mostrar/Ocultar</button>
+      </div>
+      <div id="snacksWrap" class="mt-4 hidden">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- ===== Equivalencias ===== -->
+    <section class="mb-10 card bg-white shadow-soft p-5">
+      <h2 class="text-lg font-bold mb-3">🔄 Equivalencias rápidas</h2>
+      <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1" id="equivalencias"></ul>
+    </section>
+
+    <!-- ===== Tabla seguimiento semanal ===== -->
+    <section class="mb-10 card bg-white shadow-soft p-5 overflow-auto">
+      <h2 class="text-lg font-bold mb-4">📊 Seguimiento semanal (✅ comidas hechas)</h2>
+      <div class="min-w-[720px]">
+        <table class="w-full text-sm">
+          <thead class="text-left text-slate-500 border-b">
+            <tr>
+              <th class="py-2">Día</th>
+              <th class="py-2">Kcal plan</th>
+              <th class="py-2">Kcal hechas</th>
+              <th class="py-2">Dif. vs 2500</th>
+              <th class="py-2">Hechas/Total</th>
+            </tr>
+          </thead>
+          <tbody id="weeklyTable" class="divide-y"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== Cesta de compra ===== -->
+    <section id="cesta" class="mb-24 card bg-white shadow-soft p-5">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-lg font-bold">🛒 Cesta semanal en Mercadona (Alicante 03550) · Objetivo ≈ 95€</h2>
+        <a href="#top" class="text-sky-600 hover:underline">Volver arriba</a>
+      </div>
+      <p class="text-sm text-slate-600 mb-4">Seleccioné opciones Hacendado/estándar para ajustar presupuesto. Los precios pueden variar por fecha/tienda; revisa cantidades y ofertas.</p>
+      <div id="basket" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+  </main>
+
+  <!-- ===== Modal receta SIN FOTO ===== -->
+  <dialog id="recipeModal" class="rounded-3xl w-11/12 md:w-3/4 lg:w-1/2 p-0 bg-white shadow-2xl">
+    <div class="modal-hero">
+      <div id="modalHeroTitle" class="text-4xl md:text-5xl font-extrabold">Título</div>
+    </div>
+    <div class="p-6">
+      <div class="flex justify-between items-start mb-4">
+        <h3 id="modalTitle" class="text-2xl font-bold"></h3>
+        <button onclick="closeModal()" class="btn btn-ghost">Cerrar</button>
+      </div>
+      <div class="grid grid-cols-4 gap-4 mb-6 p-4 bg-blue-50 rounded-lg">
+        <div class="text-center"><div id="modalKcal" class="text-2xl font-bold text-blue-600">0</div><div class="text-sm text-gray-600">Calorías</div></div>
+        <div class="text-center"><div id="modalP" class="text-2xl font-bold text-green-600">0g</div><div class="text-sm text-gray-600">Proteínas</div></div>
+        <div class="text-center"><div id="modalC" class="text-2xl font-bold text-orange-600">0g</div><div class="text-sm text-gray-600">Carbohidratos</div></div>
+        <div class="text-center"><div id="modalF" class="text-2xl font-bold text-purple-600">0g</div><div class="text-sm text-gray-600">Grasas</div></div>
+      </div>
+      <div class="mb-6">
+        <h4 class="font-semibold mb-2">🧾 Ingredientes</h4>
+        <ul id="modalIngr" class="space-y-2"></ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-3">👩‍🍳 Preparación</h4>
+        <ol id="modalSteps" class="space-y-2"></ol>
+      </div>
+    </div>
+  </dialog>
+
+  <footer class="border-t bg-white/60 backdrop-blur py-6">
+    <div class="max-w-7xl mx-auto px-4 text-xs text-slate-500">
+      <p>Asistente NutrIA · Menú adaptado: mujer 36 años · 1,72 m · 67 kg · gimnasio 3×/sem. Déficit moderado (~1530 kcal/día). Información nutricional aproximada.</p>
+    </div>
+  </footer>
+
+  <script>
+  // ===== Config & helpers =====
+  const GOAL_KCAL = 2500;
+  const U = (q) => `https://source.unsplash.com/800x600/?${encodeURIComponent(q)}`;
+  const LS_KEY = 'nutria_checks_v1';
+  const colorByType = (t)=>({ 'Desayuno':'bg-desayuno','Comida':'bg-comida','Merienda':'bg-merienda','Cena':'bg-cena' })[t]||'bg-desayuno';
+  const stop = new Set(['de','del','la','las','el','los','y','con','en','al','a','para']);
+  const shortLabel = (title)=>{
+    const words = title.toLowerCase().replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/g,' ').trim().split(' ').filter(Boolean);
+    const picked = words.filter(w=>!stop.has(w)).slice(0,3).map(w=>w[0].toUpperCase()+w.slice(1));
+    return picked.join(' ') || title;
+  };
+
+  // ===== Snacks extra =====
+  const SNACKS = [
+    {name:'1 manzana + 15 g almendras', kcal:160, p:4, c:18, f:9},
+    {name:'Skyr/QFB 150 g + 1 cdita. miel', kcal:130, p:17, c:15, f:0},
+    {name:'2 tortitas de maíz + 20 g crema cacahuete', kcal:180, p:6, c:16, f:10},
+    {name:'1 plátano pequeño + 10 g cacahuete', kcal:150, p:4, c:22, f:6},
+    {name:'Zanahoria cruda (150 g) + hummus 40 g', kcal:150, p:5, c:16, f:7},
+    {name:'Chocolate 85% (15 g) + nuez/almendra (10 g)', kcal:140, p:3, c:6, f:11}
+  ];
+
+  // ===== Equivalencias =====
+  const EQUIV = [
+    '🐟 Si no hay salmón → usa caballa o atún claro en lata. ',
+    '🐓 Pollo → pavo, tofu firme o legumbre + huevo. ',
+    '🥛 Queso fresco batido/Skyr → yogur griego ligero 2%. ',
+    '🌾 Arroz integral → quinoa, cuscús o patata cocida. ',
+    '🌮 Tortilla integral → pan 100% integral. ',
+    '🥬 Espinacas → acelgas, mezcla de brotes o lechuga romana.'
+  ];
+
+  // ===== Menú (7×4) =====
+  const WEEK = [
+    [
+      {title:'Bowl de yogur griego 2% con avena y frutos rojos', type:'Desayuno', kcal:350, p:24, c:45, f:10, img:U('greek yogurt oats berries'), tags:['rápido','alto en proteína'],
+        ingredients:['150 g yogur griego 2%','40 g copos de avena','100 g frutos rojos (congelados)','10 g crema de cacahuete 100%','canela al gusto'],
+        steps:['Descongela ligeramente los frutos rojos.','Mezcla yogur y avena, corona con frutos rojos.','Añade crema de cacahuete y canela.']},
+      {title:'Pollo a la plancha con arroz integral y brócoli', type:'Comida', kcal:500, p:54, c:50, f:10, img:U('grilled chicken brown rice broccoli'), tags:['meal prep'],
+        ingredients:['150 g pechuga de pollo','180 g arroz integral cocido','150 g brócoli','5 ml AOVE','sal, pimienta, ajo'],
+        steps:['Sazona y plancha el pollo 3–4 min/lado.','Cuece/rehoga el brócoli al vapor 4–5 min.','Sirve con arroz integral y AOVE.']},
+      {title:'Queso fresco batido 0% + plátano', type:'Merienda', kcal:200, p:20, c:30, f:0, img:U('banana yogurt bowl minimal'), tags:['post-gym'],
+        ingredients:['200 g queso fresco batido 0%','120 g plátano','canela'],
+        steps:['Corta el plátano y mezcla con el queso.','Espolvorea canela.']},
+      {title:'Salmón al horno con boniato y ensalada', type:'Cena', kcal:520, p:34, c:35, f:26, img:U('baked salmon sweet potato salad'), tags:['omega-3'],
+        ingredients:['140 g salmón','200 g boniato','80 g mezcla de ensalada','5 ml AOVE','sal, pimienta, limón'],
+        steps:['Horno 200ºC: boniato en cubos 25 min.','Añade el salmón 12–14 min (sal/pimienta/limón).','Sirve con ensalada y AOVE.']}
+    ],
+    [
+      {title:'Tostadas integrales con aguacate y huevo', type:'Desayuno', kcal:380, p:17, c:36, f:18, img:U('avocado toast eggs'), tags:['saciante'],
+        ingredients:['70 g pan 100% integral (2 rebanadas)','2 huevos','60 g aguacate','sal y pimienta'],
+        steps:['Tuesta el pan.','Aplasta el aguacate y reparte.','Corona con huevos (plancha/poché).']},
+      {title:'Ensalada de garbanzos con atún', type:'Comida', kcal:520, p:33, c:50, f:18, img:U('chickpea tuna salad mediterranean'), tags:['alta en fibra'],
+        ingredients:['150 g garbanzo cocido (escurrido)','80 g atún claro al natural (1 lata)','100 g tomate','60 g pimiento rojo','30 g cebolla','5 ml AOVE','vinagre, sal, orégano'],
+        steps:['Enjuaga garbanzos.','Mezcla con atún y verduras en cubos.','Aliña con AOVE, vinagre y orégano.']},
+      {title:'Tortitas de maíz con crema de cacahuete y manzana', type:'Merienda', kcal:210, p:6, c:28, f:9, img:U('rice cakes peanut butter apple'), tags:['crunchy'],
+        ingredients:['2 tortitas de maíz','15 g crema de cacahuete 100%','120 g manzana'],
+        steps:['Unta las tortitas y acompaña con manzana.']},
+      {title:'Tortilla de calabacín + ensalada', type:'Cena', kcal:420, p:28, c:18, f:24, img:U('zucchini omelette salad'), tags:['rápido nocturno'],
+        ingredients:['3 huevos','200 g calabacín','30 g cebolla','5 ml AOVE','sal, pimienta'],
+        steps:['Saltea calabacín y cebolla 5–6 min.','Añade huevos batidos y cuaja.','Sirve con ensalada verde.']}
+    ],
+    [
+      {title:'Porridge de avena con plátano y canela', type:'Desayuno', kcal:360, p:16, c:60, f:8, img:U('oatmeal banana cinnamon'), tags:['calentito'],
+        ingredients:['50 g avena','250 ml leche semidesnatada','100 g plátano','canela'],
+        steps:['Calienta la leche con la avena 4–5 min.','Sirve con plátano y canela.']},
+      {title:'Quinoa con pollo y salteado de verduras', type:'Comida', kcal:520, p:42, c:52, f:14, img:U('quinoa chicken stir fry vegetables'), tags:['meal prep'],
+        ingredients:['150 g pechuga de pollo','140 g quinoa cocida','150 g mezcla de verduras (brócoli, pimiento, zanahoria)','5 ml AOVE','soja, ajo'],
+        steps:['Saltea verduras y pollo a dados.','Añade quinoa y un toque de soja.']},
+      {title:'Yogur griego ligero + almendras', type:'Merienda', kcal:210, p:15, c:12, f:12, img:U('greek yogurt almonds'), tags:['crujiente'],
+        ingredients:['150 g yogur griego 2%','20 g almendras naturales'],
+        steps:['Mezcla y listo.']},
+      {title:'Caballa en aceite con patata y salteado', type:'Cena', kcal:420, p:30, c:35, f:16, img:U('mackerel potatoes sauteed vegetables'), tags:['omega-3'],
+        ingredients:['1 lata (100 g escurrido) caballa en AOVE','250 g patata cocida','150 g verduras salteadas','sal y pimienta'],
+        steps:['Cuece patata en cubos.','Saltea verduras, añade caballa escurrida.','Sirve con patata y pimienta.']}
+    ],
+    [
+      {title:'Smoothie bowl proteico de frutos rojos', type:'Desayuno', kcal:330, p:27, c:38, f:6, img:U('smoothie bowl berries high protein'), tags:['frío'],
+        ingredients:['200 g queso fresco batido 0%','100 g frutos rojos','30 g avena molida','agua/leche al gusto'],
+        steps:['Tritura todo hasta espesar.','Sirve en bowl (opcional: hielo).']},
+      {title:'Pasta integral con tomate y atún', type:'Comida', kcal:520, p:35, c:62, f:13, img:U('wholewheat pasta tuna tomato'), tags:['rápido'],
+        ingredients:['140 g pasta integral cocida','120 g tomate triturado','80 g atún al natural','orégano, sal','5 ml AOVE'],
+        steps:['Calienta el tomate con orégano.','Mezcla con pasta y atún.','Finaliza con AOVE.']},
+      {title:'Hummus casero + palitos de zanahoria', type:'Merienda', kcal:220, p:8, c:24, f:10, img:U('hummus carrots'), tags:['fibra'],
+        ingredients:['120 g garbanzo cocido','10 g AOVE','zumo de limón, sal, comino','150 g zanahoria cruda'],
+        steps:['Tritura garbanzo con AOVE, limón y comino.','Sirve con zanahoria en bastones.']},
+      {title:'Pollo al curry con arroz integral', type:'Cena', kcal:460, p:38, c:50, f:12, img:U('chicken curry brown rice light'), tags:['especiado'],
+        ingredients:['150 g pechuga de pollo','160 g arroz integral cocido','100 g pimiento','50 g cebolla','curry en polvo','5 ml AOVE'],
+        steps:['Saltea cebolla/pimiento con curry.','Añade pollo a dados.','Sirve con arroz.']}
+    ],
+    [
+      {title:'Tortitas de avena y huevo + yogur', type:'Desayuno', kcal:360, p:24, c:44, f:10, img:U('oat pancakes yogurt'), tags:['fin de semana vibes'],
+        ingredients:['50 g avena molida','1 huevo + 100 g claras','100 g yogur griego 2%','canela'],
+        steps:['Mezcla avena con huevo/claras.','Cuaja tortitas antiadherente.','Sirve con yogur.']},
+      {title:'Quinoa mediterránea', type:'Comida', kcal:500, p:24, c:58, f:18, img:U('quinoa salad mediterranean tomato cucumber olive'), tags:['fresca'],
+        ingredients:['160 g quinoa cocida','120 g tomate','80 g pepino','40 g maíz','30 g aceitunas (opcional)','10 ml AOVE','vinagre, sal'],
+        steps:['Corta verduras y mezcla con quinoa.','Aliña con AOVE/vinagre.']},
+      {title:'QFB cacao + almendras', type:'Merienda', kcal:210, p:20, c:14, f:10, img:U('chocolate yogurt almonds minimal'), tags:['antojo dulce'],
+        ingredients:['200 g queso fresco batido 0%','1 cda cacao puro','15 g almendras'],
+        steps:['Mezcla y a disfrutar.']},
+      {title:'Sardinas en aceite + boniato + ensalada', type:'Cena', kcal:440, p:30, c:35, f:18, img:U('sardines salad sweet potato'), tags:['omega-3'],
+        ingredients:['1 lata sardinas en AOVE (80 g escurrido)','200 g boniato','80 g ensalada','5 ml AOVE'],
+        steps:['Asa boniato 25 min a 200ºC.','Sirve con sardinas y ensalada.']}
+    ],
+    [
+      {title:'Tostada integral con pavo y tomate', type:'Desayuno', kcal:320, p:20, c:42, f:7, img:U('whole grain toast turkey tomato'), tags:['salada'],
+        ingredients:['70 g pan 100% integral','60 g pechuga de pavo lonchas 92%','80 g tomate','5 ml AOVE'],
+        steps:['Tuesta el pan.','Añade tomate en rodajas, pavo y un hilo de AOVE.']},
+      {title:'Burrito integral de pollo', type:'Comida', kcal:520, p:40, c:58, f:14, img:U('chicken burrito whole wheat'), tags:['street healthy'],
+        ingredients:['1 tortilla integral (≈50–60 g)','140 g pollo','120 g arroz cocido','80 g pimiento/cebolla','soja o especias tex-mex'],
+        steps:['Saltea pollo y verduras.','Rellena tortilla con arroz y pollo.','Dobla y dora 1–2 min.']},
+      {title:'Batido de plátano + leche + cacahuete', type:'Merienda', kcal:260, p:12, c:30, f:10, img:U('banana peanut smoothie'), tags:['recuperación'],
+        ingredients:['200 ml leche semidesnatada','100 g plátano','10 g crema cacahuete','hielo'],
+        steps:['Tritura todo y sirve frío.']},
+      {title:'Poke bowl casero de salmón', type:'Cena', kcal:450, p:32, c:50, f:14, img:U('salmon poke bowl rice cucumber'), tags:['fresco'],
+        ingredients:['120 g salmón (descongelado)','150 g arroz cocido','80 g pepino/tomate','soja, sésamo (opcional)'],
+        steps:['Monta el bowl con arroz, salmón y verduras.','Aliña con soja (moderada).']}
+    ],
+    [
+      {title:'Overnight oats manzana & canela', type:'Desayuno', kcal:340, p:18, c:55, f:8, img:U('overnight oats apple cinnamon jar'), tags:['dejar listo'],
+        ingredients:['45 g avena','200 ml leche semidesnatada','120 g manzana','canela'],
+        steps:['Mezcla avena y leche en tarro.','Refrigera 6–8 h.','Añade manzana y canela al servir.']},
+      {title:'Lentejas con verduras + huevo', type:'Comida', kcal:520, p:30, c:60, f:14, img:U('lentil stew vegetables egg'), tags:['cuchara ligera'],
+        ingredients:['220 g lenteja cocida (escurrida)','120 g tomate triturado','100 g cebolla/zanahoria','1 huevo duro','5 ml AOVE','pimentón, laurel'],
+        steps:['Sofríe cebolla/zanahoria y pimentón.','Añade tomate y lenteja, 10 min.','Sirve con huevo duro.']},
+      {title:'Fruta + almendras', type:'Merienda', kcal:190, p:4, c:20, f:11, img:U('mixed fruit almonds minimal'), tags:['simple'],
+        ingredients:['150 g fruta al gusto (naranja/manzana)','15 g almendras naturales'],
+        steps:['Lava, corta y disfruta.']},
+      {title:'Revuelto de espinacas y pollo', type:'Cena', kcal:460, p:42, c:12, f:26, img:U('chicken spinach scramble'), tags:['muy proteico'],
+        ingredients:['120 g pollo cocinado a tiras','2 huevos + 100 g claras','120 g espinacas','5 ml AOVE','sal y pimienta'],
+        steps:['Saltea espinacas.','Añade pollo y huevos, remueve hasta cuajar.']}
+    ]
+  ];
+
+  // ===== Cesta =====
+  const BASKET = [
+    {cat:'Frutas', items:[
+      {name:'Plátano de Canarias (pieza)', url:'https://tienda.mercadona.es/product/3819/platano-canarias-igp-pieza'},
+      {name:'Manzanas Golden (bolsa)', url:'https://tienda.mercadona.es/product/3269/manzanas-golden-bolsa'},
+      {name:'Naranja de mesa (pieza)', url:'https://tienda.mercadona.es/product/3235/naranja-mesa-pieza'},
+      {name:'Aguacate (pieza)', url:'https://tienda.mercadona.es/product/3830/aguacate-pieza'},
+      {name:'Mix frutos rojos congelados', url:'https://tienda.mercadona.es/product/61089/mix-frutos-rojos-hacendado-ultracongeladas-paquete'}
+    ]},
+    {cat:'Verduras', items:[
+      {name:'Mezcla brotes tiernos (bolsa lavada)', url:'https://tienda.mercadona.es/product/69810/ensalada-mezcla-brotes-tiernos-maxi-compuesto-batavia-roja-verde-lollo-rojo-espinacas-rucula-paquete'},
+      {name:'Brócoli (pieza)', url:'https://tienda.mercadona.es/product/69580/brocoli-pieza'},
+      {name:'Pimiento rojo (pieza)', url:'https://tienda.mercadona.es/product/69310/pimiento-rojo-pieza'},
+      {name:'Calabacín (pieza)', url:'https://tienda.mercadona.es/product/69338/calabacin-verde-pieza'},
+      {name:'Cebollas dulces (malla)', url:'https://tienda.mercadona.es/product/69155/cebollas-dulces-sabor-suave-malla'},
+      {name:'Zanahorias (paquete)', url:'https://tienda.mercadona.es/product/69669/zanahorias-paquete'},
+      {name:'Ajos morados (malla)', url:'https://tienda.mercadona.es/product/69297/ajos-morados-malla'},
+      {name:'Tomates cherry (bandeja)', url:'https://tienda.mercadona.es/product/69990/tomates-cherry-bandeja'},
+      {name:'Boniato (pieza)', url:'https://tienda.mercadona.es/product/69239/batata-pieza'}
+    ]},
+    {cat:'Proteínas', items:[
+      {name:'Filetes pechuga de pollo', url:'https://tienda.mercadona.es/product/2787/filetes-pechuga-pollo-bandeja'},
+      {name:'Lomos de salmón (congelado)', url:'https://tienda.mercadona.es/product/24511/lomos-salmon-sin-piel-sin-espinas-hacendado-congelado-paquete'},
+      {name:'Atún claro al natural (lata)', url:'https://tienda.mercadona.es/product/18018/atun-claro-natural-hacendado'},
+      {name:'Filetes de caballa (aceite de oliva)', url:'https://tienda.mercadona.es/product/18311/filetes-caballa-sur-bajo-contenido-sal-hacendado-aceite-oliva-pack-2'},
+      {name:'Sardinas/Sardinillas en aceite de oliva', url:'https://tienda.mercadona.es/product/18210/sardinillas-aceite-oliva-hacendado-6-12-ud-pack-2'},
+      {name:'Pechuga de pavo 92% (lonchas)', url:'https://tienda.mercadona.es/product/5710/pechuga-pavo-92-hacendado-lonchas-paquete'},
+      {name:'Huevos camperos (docena)', url:'https://tienda.mercadona.es/product/15768/huevos-gallinas-camperas-paquete'}
+    ]},
+    {cat:'Lácteos', items:[
+      {name:'Yogur griego natural (bote)', url:'https://tienda.mercadona.es/product/20512/yogur-griego-natural-hacendado-bote'},
+      {name:'Yogur griego 2% (pack)', url:'https://tienda.mercadona.es/product/52421/yogur-griego-ligero-natural-hacendado-pack-6'},
+      {name:'Queso fresco batido 0% (tarrina)', url:'https://tienda.mercadona.es/product/51071/queso-fresco-batido-desnatado-0-mg-hacendado-tarrina'},
+      {name:'Leche semidesnatada (brick)', url:'https://tienda.mercadona.es/product/10382/leche-semidesnatada-hacendado-brick'}
+    ]},
+    {cat:'Cereales & legumbres', items:[
+      {name:'Copos de avena', url:'https://tienda.mercadona.es/product/86368/copos-avena-hacendado-paquete'},
+      {name:'Pan de molde 100% integral', url:'https://tienda.mercadona.es/product/83886/pan-molde-100-integral-familiar-hacendado-paquete'},
+      {name:'Tortillas de trigo integrales', url:'https://tienda.mercadona.es/product/80942/tortillas-trigo-integrales-hacendado-paquete'},
+      {name:'Arroz integral', url:'https://tienda.mercadona.es/product/5184/arroz-integral-largo-hacendado-paquete'},
+      {name:'Quinoa', url:'https://tienda.mercadona.es/product/9430/quinoa-hacendado-paquete'},
+      {name:'Garbanzos cocidos (tarro)', url:'https://tienda.mercadona.es/product/26029/garbanzo-cocido-hacendado-tarro'},
+      {name:'Lentejas cocidas (tarro)', url:'https://tienda.mercadona.es/product/26030/lenteja-cocida-hacendado-tarro'},
+      {name:'Alubia blanca cocida (tarro)', url:'https://tienda.mercadona.es/product/26019/alubia-cocida-blanca-hacendado-tarro'},
+      {name:'Spaghetti integral', url:'https://tienda.mercadona.es/product/35778/spaghetti-integral-hacendado-paquete'}
+    ]},
+    {cat:'Aceites & condimentos', items:[
+      {name:'Aceite de oliva virgen extra', url:'https://tienda.mercadona.es/product/4740/aceite-oliva-virgen-extra-hacendado-botella'},
+      {name:'Salsa de soja', url:'https://tienda.mercadona.es/product/17360/salsa-soja-hacendado-botella'},
+      {name:'Vinagre de manzana', url:'https://tienda.mercadona.es/product/4957/vinagre-manzana-hacendado-botella'},
+      {name:'Pimentón dulce', url:'https://tienda.mercadona.es/product/34102/pimenton-dulce-vera-hacendado-bote'},
+      {name:'Curry en polvo', url:'https://tienda.mercadona.es/product/34125/curry-hacendado-bote'},
+      {name:'Orégano', url:'https://tienda.mercadona.es/product/5598/oregano-hacendado-bote'},
+      {name:'Sal yodada fina', url:'https://tienda.mercadona.es/product/19732/sal-yodada-fina-hacendado-paquete'}
+    ]},
+    {cat:'Frutos secos & untables', items:[
+      {name:'Almendra natural', url:'https://tienda.mercadona.es/product/34865/almendra-natural-hacendado-paquete'},
+      {name:'Crema de cacahuete 100%', url:'https://tienda.mercadona.es/product/16883/crema-cacahuete-100-hacendado-tarro'}
+    ]}
+  ];
+
+  // ===== Estado y referencias DOM =====
+  const weekGrid = document.getElementById('weekGrid');
+  const daySelect = document.getElementById('daySelect');
+  const plannedKcal = document.getElementById('plannedKcal');
+  const plannedP = document.getElementById('plannedP');
+  const plannedC = document.getElementById('plannedC');
+  const plannedF = document.getElementById('plannedF');
+  const doneKcal = document.getElementById('doneKcal');
+  const diffVsGoal = document.getElementById('diffVsGoal');
+  const weeklyTable = document.getElementById('weeklyTable');
+  let checks = JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+
+  function mealKey(d, m){return `d${d}-m${m}`}
+
+  // ===== Render del calendario con tarjetas grandes =====
+  function renderWeek(){
+    weekGrid.innerHTML = '';
+    WEEK.forEach((day, dIdx)=>{
+      const dayName = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'][dIdx];
+      const totals = day.reduce((a,m)=>({k:a.k+m.kcal,p:a.p+m.p,c:a.c+m.c,f:a.f+m.f}),{k:0,p:0,c:0,f:0});
+      const doneK = day.reduce((a,m,mIdx)=> a + (checks[mealKey(dIdx,mIdx)]?m.kcal:0), 0);
+
+      const wrap = document.createElement('div');
+      wrap.className = 'card bg-white shadow-soft p-5 fade';
+      const caloriesDiff = doneK - GOAL_KCAL;
+      wrap.innerHTML = `
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-2xl font-extrabold">${dayName}</h3>
+          <div class="text-right">
+            <div class="text-sm text-gray-600">Completadas: ${doneK} / ${totals.k} kcal</div>
+            <div class="text-sm font-semibold ${caloriesDiff > 0 ? 'text-red-600' : caloriesDiff < -200 ? 'text-orange-600' : 'text-green-600'}">${caloriesDiff > 0 ? `+${caloriesDiff}` : caloriesDiff} kcal vs objetivo</div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+      `;
+
+      const grid = wrap.querySelector('.grid');
+      day.forEach((meal, mIdx)=>{
+        const id = mealKey(dIdx,mIdx);
+        const checked = !!checks[id];
+        const card = document.createElement('div');
+        card.className = `meal-card ${checked?'bg-green-50 border-green-300':'bg-gray-50 border-gray-200'}`;
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="meal-type capitalize">${meal.type}</h4>
+            <label class="text-xs flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" class="checkbox" data-id="${id}" ${checked?'checked':''}/> Hecha
+            </label>
+          </div>
+          <div class="meal-hero ${colorByType(meal.type)}">${shortLabel(meal.title)}</div>
+          <h5 class="font-medium text-gray-800 mt-3">${meal.title}</h5>
+          <div class="meta mt-1">🔥 ${meal.kcal} kcal · 🥩 ${meal.p} g proteína</div>
+          <button class="w-full btn-primary-sm mt-3" data-open="${id}">Ver receta</button>
+        `;
+        grid.appendChild(card);
+      });
+
+      weekGrid.appendChild(wrap);
+    });
+
+    attachEvents();
+    updateTopSummary();
+    renderWeeklyTable();
+  }
+
+  function attachEvents(){
+    weekGrid.querySelectorAll('input[type="checkbox"]').forEach(chk=>{
+      chk.addEventListener('change', e=>{
+        const id = e.target.dataset.id; checks[id]=e.target.checked; if(!e.target.checked) delete checks[id];
+        localStorage.setItem(LS_KEY, JSON.stringify(checks));
+        updateTopSummary();
+        renderWeeklyTable();
+      })
+    });
+    weekGrid.querySelectorAll('[data-open]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const [dStr,mStr] = btn.dataset.open.split('-');
+        const d = parseInt(dStr.replace('d',''),10); const m = parseInt(mStr.replace('m',''),10);
+        openModal(WEEK[d][m]);
+      });
+    });
+  }
+
+  // ===== Resumen superior (selector de día) =====
+  function updateTopSummary(){
+    const d = parseInt(daySelect.value,10); const day = WEEK[d];
+    const planned = day.reduce((a,m)=>({k:a.k+m.kcal,p:a.p+m.p,c:a.c+m.c,f:a.f+m.f}), {k:0,p:0,c:0,f:0});
+    plannedKcal.textContent = planned.k; plannedP.textContent = planned.p; plannedC.textContent = planned.c; plannedF.textContent = planned.f;
+    const done = day.reduce((sum, m, mIdx)=> sum + (checks[mealKey(d,mIdx)]? m.kcal:0), 0);
+    doneKcal.textContent = done; diffVsGoal.textContent = GOAL_KCAL - done;
+  }
+  daySelect.addEventListener('change', updateTopSummary);
+
+  // ===== Modal =====
+  const modal = document.getElementById('recipeModal');
+  function openModal(meal){
+    document.getElementById('modalHeroTitle').textContent = shortLabel(meal.title);
+    document.getElementById('modalTitle').textContent = meal.title;
+    document.getElementById('modalKcal').textContent = meal.kcal;
+    document.getElementById('modalP').textContent = meal.p+'g';
+    document.getElementById('modalC').textContent = meal.c+'g';
+    document.getElementById('modalF').textContent = meal.f+'g';
+    const ingr = document.getElementById('modalIngr');
+    ingr.innerHTML='';
+    meal.ingredients.forEach(i=>{ const li=document.createElement('li'); li.className='flex items-center'; li.innerHTML='<span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>'+i; ingr.appendChild(li); });
+    const steps = document.getElementById('modalSteps');
+    steps.innerHTML='';
+    meal.steps.forEach((s,i)=>{ const li=document.createElement('li'); li.className='flex'; li.innerHTML=`<span class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-3 mt-0.5">${i+1}</span><span>${s}</span>`; steps.appendChild(li); });
+    modal.showModal();
+  }
+  function closeModal(){ modal.close(); }
+  window.closeModal = closeModal;
+
+  // ===== Tabla semanal =====
+  function renderWeeklyTable(){
+    weeklyTable.innerHTML='';
+    WEEK.forEach((day, d)=>{
+      const planK = day.reduce((a,m)=>a+m.kcal,0);
+      const doneK = day.reduce((a,m,mIdx)=> a + (checks[mealKey(d,mIdx)]?m.kcal:0), 0);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="py-2">${['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'][d]} (D${d+1})</td>
+        <td class="py-2 kcal-badge">${planK}</td>
+        <td class="py-2 kcal-badge">${doneK}</td>
+        <td class="py-2 kcal-badge">${GOAL_KCAL - doneK}</td>
+        <td class="py-2">${Object.keys(checks).filter(k=>k.startsWith('d'+d+'-')).length}/4</td>
+      `;
+      weeklyTable.appendChild(tr);
+    })
+  }
+
+  // ===== Snacks =====
+  const snacksWrap = document.getElementById('snacksWrap');
+  document.getElementById('toggleSnacks').addEventListener('click',()=> snacksWrap.classList.toggle('hidden'));
+  function renderSnacks(){
+    const grid = snacksWrap.querySelector('.grid'); grid.innerHTML='';
+    SNACKS.forEach(s=>{
+      const card = document.createElement('div'); card.className='p-4 border rounded-2xl';
+      card.innerHTML = `
+        <div class="flex items-start gap-2">
+          <div class="font-medium">${s.name}</div>
+          <div class="ml-auto text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded-xl kcal-badge">${s.kcal} kcal · P ${s.p} · C ${s.c} · G ${s.f}</div>
+        </div>
+        <div class="mt-2 flex gap-2">
+          <button class="btn btn-ghost" data-add-kcal="${s.kcal}">➕ Añadir hoy</button>
+        </div>`;
+      grid.appendChild(card);
+    });
+    grid.querySelectorAll('[data-add-kcal]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const extra = parseInt(btn.dataset.addKcal,10);
+        const current = parseInt(doneKcal.textContent,10)||0; doneKcal.textContent = current + extra; diffVsGoal.textContent = GOAL_KCAL - (current + extra);
+      })
+    })
+  }
+
+  // ===== Equivalencias =====
+  function renderEquivalencias(){
+    const ul = document.getElementById('equivalencias'); ul.innerHTML='';
+    EQUIV.forEach(e=>{ const li=document.createElement('li'); li.textContent=e; ul.appendChild(li); })
+  }
+
+  // ===== Cesta (enlaces Mercadona) =====
+  function renderBasket(){
+    const wrap = document.getElementById('basket'); wrap.innerHTML='';
+    BASKET.forEach(group=>{
+      const card = document.createElement('div'); card.className='border rounded-2xl p-4';
+      card.innerHTML = `<h3 class="font-semibold mb-2">${group.cat}</h3>`;
+      const list = document.createElement('ul'); list.className='space-y-2';
+      group.items.forEach(it=>{ const li = document.createElement('li'); li.innerHTML = `<a class="text-sky-700 hover:underline" href="${it.url}" target="_blank" rel="noopener">${it.name}</a>`; list.appendChild(li); });
+      card.appendChild(list); wrap.appendChild(card);
+    })
+  }
+
+  // ===== Rotación de semana =====
+  document.getElementById('rotateBtn').addEventListener('click', ()=>{
+    const breakfasts = WEEK.map(d=>d[0]);
+    const shuffled = breakfasts.sort(()=>Math.random()-0.5);
+    WEEK.forEach((d,i)=> d[0]=shuffled[i]);
+    renderWeek();
+  });
+
+  // ===== Init =====
+  renderWeek();
+  renderSnacks();
+  renderEquivalencias();
+  renderBasket();
+  </script>
+</body>
+</html>
